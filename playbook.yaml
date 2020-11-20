@@ -1,0 +1,41 @@
+- hosts: all
+  become: yes
+  become_method: sudo
+
+  tasks:
+  - name: Install Basic packages
+    apt:
+      name: ['vim', 'zip', 'bash-completion', 'wget', 'nginx', 'nodejs', 'npm']
+
+  - name: Start and enable NGINX
+    service:
+      state: started
+      name: nginx
+
+  - name: Install pm2
+    npm:
+      name: pm2
+      global: yes
+
+  - name: Install express
+    command: npm install express /vagrant/
+
+  - name: start pm2
+    command: pm2 start /vagrant/myapp.js -i max
+    tags:
+      -app
+
+  - name: suppression fichier default
+    file:
+      state: absent
+      path: /etc/nginx/sites-enabled/default
+
+  - name: copier le fichier
+    copy:
+      src: /vagrant/default
+      dest: /etc/nginx/sites-enabled/default
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
